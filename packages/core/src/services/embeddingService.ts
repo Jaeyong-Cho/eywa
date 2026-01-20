@@ -1,7 +1,22 @@
 import { pipeline, env } from '@xenova/transformers';
 
 env.allowLocalModels = false;
-env.useBrowserCache = true;
+
+function isBrowserCacheAvailable(): boolean {
+  try {
+    return typeof globalThis !== 'undefined' && 
+           'caches' in globalThis && 
+           (globalThis as any).caches !== null;
+  } catch {
+    return false;
+  }
+}
+
+env.useBrowserCache = isBrowserCacheAvailable();
+
+if (!env.useBrowserCache) {
+  console.warn('Browser cache not available, models will be downloaded each time');
+}
 
 let embeddingPipeline: any = null;
 
@@ -12,10 +27,18 @@ export async function initializeEmbeddingModel(
     return;
   }
 
-  embeddingPipeline = await pipeline(
-    'feature-extraction',
-    modelName
-  );
+  try {
+    embeddingPipeline = await pipeline(
+      'feature-extraction',
+      modelName,
+      {
+        cache_dir: env.useBrowserCache ? undefined : './.cache',
+      }
+    );
+  } catch (error) {
+    console.error('Failed to initialize embedding model:', error);
+    throw error;
+  }
 }
 
 export async function generateEmbedding(text: string): Promise<number[]> {
