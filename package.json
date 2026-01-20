@@ -1,0 +1,18 @@
+{
+  "name": "eywa-root",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=@eywa/web",
+    "dev:desktop": "npm run tauri dev --workspace=@eywa/desktop",
+    "build:web": "npm run build --workspace=@eywa/web",
+    "build:desktop": "npm run tauri build --workspace=@eywa/desktop",
+    "build:core": "npm run build --workspace=@eywa/core"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}
