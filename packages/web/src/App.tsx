@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { FileTreeView } from './components/FileTreeView';
 import { MarkdownEditor } from './components/MarkdownEditor';
@@ -85,6 +85,12 @@ export function App() {
         const viewDuration = Date.now() - viewStartTime;
         recordNoteView(selectedNoteId, viewDuration);
       }
+      if (contentUpdateTimerRef.current !== null) {
+        clearTimeout(contentUpdateTimerRef.current);
+      }
+      if (titleUpdateTimerRef.current !== null) {
+        clearTimeout(titleUpdateTimerRef.current);
+      }
     };
   }, [selectedNoteId, viewStartTime]);
 
@@ -132,26 +138,43 @@ export function App() {
     setSelectedNoteId(noteId);
   }
 
+  const contentUpdateTimerRef = useRef<number | null>(null);
+
   const handleContentChange = useCallback(
-    async (content: string): Promise<void> => {
+    (content: string): void => {
       if (!selectedNoteId) {
         return;
       }
 
       setCurrentContent(content);
-      await updateNote(selectedNoteId, { content });
-      await updateHeadingChunks(selectedNoteId, content);
+
+      if (contentUpdateTimerRef.current !== null) {
+        clearTimeout(contentUpdateTimerRef.current);
+      }
+
+      contentUpdateTimerRef.current = window.setTimeout(async () => {
+        await updateNote(selectedNoteId, { content });
+        await updateHeadingChunks(selectedNoteId, content);
+      }, 10000);
     },
     [selectedNoteId]
   );
 
+  const titleUpdateTimerRef = useRef<number | null>(null);
+
   const handleTitleChange = useCallback(
-    async (title: string): Promise<void> => {
+    (title: string): void => {
       if (!selectedNoteId) {
         return;
       }
 
-      await updateNote(selectedNoteId, { title });
+      if (titleUpdateTimerRef.current !== null) {
+        clearTimeout(titleUpdateTimerRef.current);
+      }
+
+      titleUpdateTimerRef.current = window.setTimeout(async () => {
+        await updateNote(selectedNoteId, { title });
+      }, 10000);
     },
     [selectedNoteId]
   );
