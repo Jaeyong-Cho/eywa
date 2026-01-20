@@ -4,7 +4,6 @@ import { db } from '../db/database';
 import {
   recommendNotes,
   recommendHeadings,
-  extractHeadingsFromMarkdown,
   type RecommendationScore,
   type Note,
   type Workspace,
@@ -13,7 +12,9 @@ import { updateNoteEngagement } from '../services/noteService';
 import { RecommendationCard } from './RecommendationCard';
 import { ResizeIndicator } from './ResizeIndicator';
 import { GridSizeIndicator } from './GridSizeIndicator';
+import { RecommendationStatus } from './RecommendationStatus';
 import { useResizable } from '../hooks/useResizable';
+import { useAsyncRecommendations } from '../hooks/useAsyncRecommendations';
 
 interface RecommendationPanelProps {
   currentNoteId: string;
@@ -28,16 +29,26 @@ export function RecommendationPanel({
   workspace,
   onSelectNote,
 }: RecommendationPanelProps) {
-  const [recommendations, setRecommendations] = useState<
-    RecommendationScore[]
-  >([]);
-  const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'note' | 'heading'>('heading');
   const [debugInfo, setDebugInfo] = useState<string>('');
 
   const { width, isResizing, handleMouseDown } = useResizable({
     initialWidth: 400,
     minWidth: 300,
+  });
+
+  const {
+    recommendations,
+    isLoading: loading,
+    remainingTime,
+    status,
+    compute,
+  } = useAsyncRecommendations({
+    debounceMs: 10000,
+    onError: (error) => {
+      console.error('Recommendation error:', error);
+      setDebugInfo(`Error: ${error.message}`);
+    },
   });
 
   const notes = useLiveQuery(() =>
@@ -49,27 +60,14 @@ export function RecommendationPanel({
   );
 
   useEffect(() => {
-    async function loadRecommendations(): Promise<void> {
-      if (!currentNote.content.trim() || !notes) {
-        setRecommendations([]);
-        return;
-      }
-
-      setLoading(true);
-
-      if (mode === 'heading') {
-        await loadHeadingRecommendations();
-      } else {
-        await loadNoteRecommendations();
-      }
-
-      setLoading(false);
+    if (!currentNote.content.trim() || !notes) {
+      return;
     }
 
-    async function loadHeadingRecommendations(): Promise<void> {
+    const computeHeadingRecommendations = async (): Promise<RecommendationScore[]> => {
       if (!allHeadingChunks) {
         setDebugInfo('No heading chunks available');
-        return;
+        return [];
       }
 
       const currentNoteChunks = await db.headingChunks
@@ -79,35 +77,34 @@ export function RecommendationPanel({
 
       if (currentNoteChunks.length === 0) {
         setDebugInfo('Current note has no heading chunks. Add headings with # to get recommendations.');
-        setRecommendations([]);
-        return;
+        return [];
       }
 
       const lastChunk = currentNoteChunks[currentNoteChunks.length - 1];
       
       if (!lastChunk.embedding) {
         setDebugInfo('Current heading has no embedding. Please wait for embedding generation.');
-        setRecommendations([]);
-        return;
+        return [];
       }
 
       setDebugInfo(`Comparing against ${allHeadingChunks.length} heading chunks`);
 
-      const scores = recommendHeadings(
+      const scores = await recommendHeadings(
         lastChunk.heading,
         lastChunk.embedding,
         allHeadingChunks,
         currentNoteId,
-        workspace.settings.maxRecommendations
+        workspace.settings.maxRecommendations,
+        workspace.settings
       );
 
       setDebugInfo(`Found ${scores.length} recommendations`);
-      setRecommendations(scores);
-    }
+      return scores;
+    };
 
-    async function loadNoteRecommendations(): Promise<void> {
+    const computeNoteRecommendations = async (): Promise<RecommendationScore[]> => {
       if (!notes) {
-        return;
+        return [];
       }
 
       const relations = await db.noteRelations
@@ -120,18 +117,23 @@ export function RecommendationPanel({
         relationMap.set(rel.targetNoteId, rel.weight);
       }
 
-      const scores = recommendNotes({
+      const scores = await recommendNotes({
         currentNote,
         allNotes: notes,
         relations: relationMap,
         settings: workspace.settings,
       });
 
-      setRecommendations(scores);
-    }
+      return scores;
+    };
 
-    const debounceTimer = setTimeout(loadRecommendations, 500);
-    return () => clearTimeout(debounceTimer);
+    compute(async () => {
+      if (mode === 'heading') {
+        return await computeHeadingRecommendations();
+      } else {
+        return await computeNoteRecommendations();
+      }
+    });
   }, [currentNoteId, currentNote, workspace, notes, allHeadingChunks, mode]);
 
   async function handleThumbsUp(noteId: string): Promise<void> {
@@ -155,6 +157,7 @@ export function RecommendationPanel({
           <h3>Recommendations</h3>
           <GridSizeIndicator containerWidth={width} />
         </div>
+        <RecommendationStatus isLoading={loading} remainingTime={remainingTime} />
         <div className="recommendation-mode-toggle">
           <button
             className={`mode-btn ${mode === 'heading' ? 'active' : ''}`}

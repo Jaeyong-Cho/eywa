@@ -6,6 +6,11 @@ import {
   WorkspaceSettings,
 } from '../types/note';
 import { calculateCosineSimilarity } from './embeddingService';
+import {
+  isTauriEnvironment,
+  recommendNotesRust,
+  recommendHeadingsRust,
+} from './recommendationService.rust';
 
 const DEFAULT_SCORE_WEIGHTS = {
   semantic: 0.4,
@@ -54,10 +59,24 @@ interface RecommendationContext {
   settings?: WorkspaceSettings;
 }
 
-export function recommendNotes(
+export async function recommendNotes(
   context: RecommendationContext
-): RecommendationScore[] {
+): Promise<RecommendationScore[]> {
   const { currentNote, allNotes, relations, settings } = context;
+
+  if (isTauriEnvironment() && settings) {
+    try {
+      return await recommendNotesRust(
+        currentNote,
+        allNotes,
+        relations,
+        settings
+      );
+    } catch (error) {
+      console.warn('Failed to use Rust recommendation, falling back to TypeScript:', error);
+    }
+  }
+
   const maxRecommendations = settings?.maxRecommendations ?? 5;
   const semanticThreshold = settings?.semanticThreshold ?? 0.1;
 
@@ -141,13 +160,28 @@ export function recommendNotes(
   return scores.slice(0, maxRecommendations);
 }
 
-export function recommendHeadings(
+export async function recommendHeadings(
   currentHeading: string,
   currentEmbedding: number[] | undefined,
   allChunks: HeadingChunk[],
   currentNoteId: string,
-  limit: number = 5
-): RecommendationScore[] {
+  limit: number = 5,
+  settings?: WorkspaceSettings
+): Promise<RecommendationScore[]> {
+  if (isTauriEnvironment() && currentEmbedding && settings) {
+    try {
+      return await recommendHeadingsRust(
+        currentHeading,
+        currentEmbedding,
+        allChunks,
+        currentNoteId,
+        settings
+      );
+    } catch (error) {
+      console.warn('Failed to use Rust recommendation, falling back to TypeScript:', error);
+    }
+  }
+
   const scores: RecommendationScore[] = [];
 
   for (const chunk of allChunks) {

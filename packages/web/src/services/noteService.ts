@@ -29,6 +29,8 @@ export async function createNote(
   return note;
 }
 
+let embeddingQueue: Promise<void> = Promise.resolve();
+
 export async function updateNote(
   id: string,
   updates: Partial<Note>
@@ -43,13 +45,21 @@ export async function updateNote(
     updatedAt: Date.now(),
   };
 
-  if (updates.content !== undefined) {
-    updatedData.embedding = updates.content.trim()
-      ? await generateEmbedding(updates.content)
-      : undefined;
-  }
-
   await db.notes.update(id, updatedData);
+
+  if (updates.content !== undefined) {
+    embeddingQueue = embeddingQueue.then(async () => {
+      try {
+        const embedding = updates.content && updates.content.trim()
+          ? await generateEmbedding(updates.content)
+          : undefined;
+        
+        await db.notes.update(id, { embedding });
+      } catch (error) {
+        console.error('Failed to generate embedding:', error);
+      }
+    });
+  }
 }
 
 export async function deleteNote(id: string): Promise<void> {

@@ -1,6 +1,8 @@
 import { db } from '../db/database';
 import { createHeadingChunks, type HeadingChunk } from '@eywa/core';
 
+let chunkUpdateQueue: Promise<void> = Promise.resolve();
+
 export async function updateHeadingChunks(
   noteId: string,
   markdown: string
@@ -14,13 +16,19 @@ export async function updateHeadingChunks(
     await db.headingChunks.where('noteId').equals(noteId).delete();
   }
 
-  const chunks = await createHeadingChunks(noteId, markdown);
+  chunkUpdateQueue = chunkUpdateQueue.then(async () => {
+    try {
+      const chunks = await createHeadingChunks(noteId, markdown);
 
-  if (chunks.length > 0) {
-    await db.headingChunks.bulkAdd(chunks);
-  }
+      if (chunks.length > 0) {
+        await db.headingChunks.bulkAdd(chunks);
+      }
+    } catch (error) {
+      console.error('Failed to update heading chunks:', error);
+    }
+  });
 
-  return chunks;
+  return [];
 }
 
 export async function getHeadingChunks(
