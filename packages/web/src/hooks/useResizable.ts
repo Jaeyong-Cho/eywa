@@ -4,13 +4,18 @@ interface UseResizableOptions {
   initialWidth: number;
   minWidth: number;
   maxWidth?: number;
+  direction?: 'left' | 'right';
 }
 
 export function useResizable({
   initialWidth,
   minWidth,
   maxWidth,
+  direction = 'left',
 }: UseResizableOptions) {
+  console.assert(initialWidth > 0, 'initialWidth must be positive');
+  console.assert(minWidth > 0, 'minWidth must be positive');
+  
   const [width, setWidth] = useState(initialWidth);
   const [isResizing, setIsResizing] = useState(false);
   const startXRef = useRef(0);
@@ -29,12 +34,16 @@ export function useResizable({
     }
 
     function handleMouseMove(e: MouseEvent): void {
-      const deltaX = startXRef.current - e.clientX;
-      let newWidth = Math.max(minWidth, startWidthRef.current + deltaX);
+      const deltaX = e.clientX - startXRef.current;
+      const adjustedDelta = direction === 'right' ? deltaX : -deltaX;
+      let newWidth = Math.max(minWidth, startWidthRef.current + adjustedDelta);
       
       if (maxWidth !== undefined) {
         newWidth = Math.min(maxWidth, newWidth);
       }
+      
+      console.assert(newWidth >= minWidth, 'newWidth must be >= minWidth');
+      console.assert(!maxWidth || newWidth <= maxWidth, 'newWidth must be <= maxWidth if maxWidth is set');
       
       setWidth(newWidth);
     }

@@ -5,6 +5,7 @@ import { MarkdownEditor } from './components/MarkdownEditor';
 import { RecommendationPanel } from './components/RecommendationPanel';
 import { WorkspaceSelector } from './components/WorkspaceSelector';
 import { WorkspaceSettings } from './components/WorkspaceSettings';
+import { ResizeIndicator } from './components/ResizeIndicator';
 import { db } from './db/database';
 import {
   createNote,
@@ -23,6 +24,7 @@ import {
   type Workspace,
   type WorkspaceSettings as Settings,
 } from '@eywa/core';
+import { useResizable } from './hooks/useResizable';
 
 export function App() {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
@@ -31,6 +33,13 @@ export function App() {
   const [viewStartTime, setViewStartTime] = useState<number>(Date.now());
   const [showSettings, setShowSettings] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  const { width: sidebarWidth, isResizing: isSidebarResizing, handleMouseDown: handleSidebarResize } = useResizable({
+    initialWidth: 280,
+    minWidth: 200,
+    maxWidth: 500,
+    direction: 'right',
+  });
 
   const workspace = useLiveQuery(
     async () => {
@@ -185,7 +194,7 @@ export function App() {
   return (
     <div className="app">
       <div className="app-layout">
-        <aside className="sidebar">
+        <aside className="sidebar" style={{ width: `${sidebarWidth}px` }}>
           <WorkspaceSelector
             currentWorkspace={workspace}
             onSelectWorkspace={handleSelectWorkspace}
@@ -198,6 +207,12 @@ export function App() {
             onSelectNote={handleSelectNote}
             onCreateNote={handleCreateNote}
           />
+          <div
+            className={`resize-handle right ${isSidebarResizing ? 'resizing' : ''}`}
+            onMouseDown={handleSidebarResize}
+            title="Drag to resize"
+          />
+          <ResizeIndicator isResizing={isSidebarResizing} width={sidebarWidth} />
         </aside>
         <main className="main-content">
           {selectedNote ? (
