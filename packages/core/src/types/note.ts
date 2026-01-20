@@ -11,6 +11,7 @@ export interface Note {
   viewCount: number;
   lastViewedAt: number;
   embedding?: number[];
+  filePath?: string;
 }
 
 export interface HeadingChunk {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { NoteList } from './components/NoteList';
+import { FileTreeView } from './components/FileTreeView';
 import { MarkdownEditor } from './components/MarkdownEditor';
 import { RecommendationPanel } from './components/RecommendationPanel';
 import { WorkspaceSelector } from './components/WorkspaceSelector';
@@ -201,7 +201,7 @@ export function App() {
             onCreateWorkspace={handleCreateWorkspace}
             onManageWorkspace={() => setShowSettings(true)}
           />
-          <NoteList
+          <FileTreeView
             workspace={workspace}
             selectedNoteId={selectedNoteId}
             onSelectNote={handleSelectNote}

@@ -3,7 +3,7 @@ import { Workspace, WorkspaceSettings } from '../types/note';
 
 const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
   embeddingModel: 'Xenova/all-MiniLM-L6-v2',
-  maxRecommendations: 5,
+  maxRecommendations: 10,
   semanticThreshold: 0.1,
   autoSaveDelay: 500,
 };

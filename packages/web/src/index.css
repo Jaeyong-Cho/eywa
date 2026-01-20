@@ -1219,3 +1219,220 @@ body {
 .recommendation-panel:hover::before {
   opacity: 1;
 }
+
+.file-tree-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.file-tree-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-tree-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.file-tree-header .create-note-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.file-tree-header .create-note-btn:hover {
+  background-color: var(--accent-hover);
+  transform: scale(1.05);
+}
+
+.file-tree-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.file-tree-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.file-tree-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.file-tree-content::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.file-tree-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.file-tree-loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.tree-folder {
+  user-select: none;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 13px;
+  color: var(--text-primary);
+  gap: 6px;
+  border-radius: 6px;
+  margin: 0 8px;
+}
+
+.tree-item:hover {
+  background-color: var(--bg-secondary);
+}
+
+.tree-item.file.selected {
+  background-color: var(--accent-color);
+  color: white;
+  font-weight: 500;
+}
+
+.tree-item.file.selected .tree-icon {
+  filter: brightness(0) invert(1);
+}
+
+.tree-item.folder {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.tree-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.tree-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tree-icon.chevron {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.tree-icon.folder-icon {
+  color: #fbbf24;
+}
+
+.tree-icon.folder-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.tree-item.folder:hover .tree-icon.folder-icon {
+  color: #f59e0b;
+}
+
+.tree-icon.file-icon {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.tree-item.file:hover .tree-icon.file-icon {
+  color: var(--accent-color);
+  opacity: 1;
+}
+
+.tree-item.file.selected .tree-icon.file-icon {
+  color: white;
+  opacity: 1;
+}
+
+.tree-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-count {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.tree-children {
+  animation: slideDown 0.15s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.empty-tree {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.empty-tree p {
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.empty-tree button {
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.empty-tree button:hover {
+  background-color: var(--accent-hover);
+}

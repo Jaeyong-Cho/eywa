@@ -87,7 +87,7 @@ export function RecommendationCard({
           </ReactMarkdown>
         </div>
         <div className="card-reasons">
-          {recommendation.reasons.slice(0, 3).map((reason, idx) => (
+          {recommendation.reasons.map((reason, idx) => (
             <span key={idx} className="reason-pill">
               {reason.detail}
             </span>
